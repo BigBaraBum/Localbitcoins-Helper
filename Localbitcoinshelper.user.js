@@ -17,13 +17,13 @@
     .appendTo("body")
     .css({
       position: "fixed",
-      top: "800px",
+      top: "600px",
       right: "0",
       //width: "150px",
       //height: "150px",
-      "font-size" : "21px",
+      "font-size": "21px",
       "background-color": "rgba(255,255,255,1)",
-      "border" : "3px solid blue",
+      border: "3px solid blue",
       "z-index": "99999999"
     })
     .addClass("my-menu")
@@ -33,24 +33,36 @@
     .append("<p>Total price btc: <span id='total-btc'></span>")
     .append("<input id='address' placeholder='Address to watch'>")
     .append("<p>Confirmations: <span id='confirmations'></span>")
-    .append("<p>Last blocks (in mins): <span id='last-blocks'></span><p>")
+    .append("<p>Last blocks (in mins):</p>")
+    .append("<ul id='last-blocks'><ul>");
 
-  $(window).on("load", function () {
-
-  });
+  $(window).on("load", function () {});
   getFee();
-  $('.my-menu input').on('input', function(){
-    total = Number($('#first-input').get(0).value) + Number($('#second-input').get(0).value) + Number(outgoingFee);
+  getLastBlocks();
+  $(".my-menu input").on("input", function () {
+    total = Number($("#first-input").get(0).value) + Number($("#second-input").get(0).value) + Number(outgoingFee);
     renderTotal();
-    $('#btcinput').val(total) ;
-  })
-  function getLastBlocks(){
+    $("#btcinput").val(total);
+  });
+  function getLastBlocks() {
     $.ajax({
-      url: "",
-      success: function(response){
-        console.log(response);
+      url: "https://sochain.com/api/v2/get_info/BTC",
+      success: function (response) {
+        $("#last-blocks").empty();
+        for (let index = 0; index < 5; index++) {
+          let block = response.data.blocks - index;
+          $.ajax({
+            url: "https://sochain.com/api/v2/get_block/BTC/" + block,
+            success: function (response) {
+              let time = new Date(response.data.time * 1000);
+              let today = new Date();
+              let differenceTime = Math.floor((today - time) / (60 * 1000));
+              $("#last-blocks").append("<li>" + differenceTime + " minutes #" + response.data.block_no);
+            }
+          });
+        }
       }
-    })
+    });
   }
   function getFee() {
     $.ajax({
@@ -61,16 +73,15 @@
         renderFee();
         renderTotal();
       },
-      error: function(error){
+      error: function (error) {
         console.log(error);
       }
     });
   }
-  function renderTotal(){
-    $('#total-btc').get(0).textContent = total;
+  function renderTotal() {
+    $("#total-btc").get(0).textContent = total;
   }
   function renderFee() {
     $("#transaction-fee").get(0).textContent = outgoingFee;
   }
-
 })();
